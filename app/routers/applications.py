@@ -4,6 +4,8 @@ from datetime import date, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Response, status
+from fastapi.encoders import jsonable_encoder
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -106,7 +108,13 @@ def update_application(
     """Partially update an existing tracked application."""
 
     application = _application_or_404(db, application_id)
-    return application_service.update_application(db, application, payload)
+    try:
+        return application_service.update_application(db, application, payload)
+    except ValidationError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=jsonable_encoder(error.errors(include_url=False)),
+        ) from error
 
 
 @router.delete("/{application_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -1,12 +1,18 @@
 """FastAPI application entry point."""
 
 from contextlib import asynccontextmanager
+import logging
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import settings
 from app.database import create_db_and_tables
 from app.routers import applications_router
+
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -32,6 +38,17 @@ app = FastAPI(
 )
 
 app.include_router(applications_router, prefix=settings.api_v1_prefix)
+
+
+@app.exception_handler(SQLAlchemyError)
+async def database_exception_handler(_: Request, error: SQLAlchemyError) -> JSONResponse:
+    """Return a safe response while preserving database details in server logs."""
+
+    logger.exception("Database operation failed", exc_info=error)
+    return JSONResponse(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        content={"detail": "The database is temporarily unavailable."},
+    )
 
 
 @app.get("/", tags=["System"])
