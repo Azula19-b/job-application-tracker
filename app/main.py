@@ -1,8 +1,20 @@
 """FastAPI application entry point."""
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
 from app.config import settings
+from app.database import create_db_and_tables
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    """Initialize database tables when enabled for simple deployments."""
+
+    if settings.create_tables_on_startup:
+        create_db_and_tables()
+    yield
 
 
 app = FastAPI(
@@ -15,6 +27,7 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
+    lifespan=lifespan,
 )
 
 
