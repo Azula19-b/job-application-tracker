@@ -6,6 +6,7 @@ from fastapi import FastAPI
 
 from app.config import settings
 from app.database import create_db_and_tables
+from app.routers import applications_router
 
 
 @asynccontextmanager
@@ -29,6 +30,8 @@ app = FastAPI(
     openapi_url="/openapi.json",
     lifespan=lifespan,
 )
+
+app.include_router(applications_router, prefix=settings.api_v1_prefix)
 
 
 @app.get("/", tags=["System"])
