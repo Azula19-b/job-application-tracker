@@ -90,3 +90,10 @@ class JobApplicationRead(JobApplicationBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ApplicationStats(BaseModel):
+    """Counts used to summarize the current application pipeline."""
+
+    total: int
+    by_status: dict[str, int]
